@@ -1,166 +1,184 @@
 import React, { useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend ,PointElement,LineElement} from "chart.js";
-import moment from "moment";
+import axios from "axios";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement ,Title, Tooltip, Legend);
+const ClockInOut = () => {
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [note, setNote] = useState("");
+  const [clockedIn, setClockedIn] = useState(false);
+  const [message, setMessage] = useState("");
+  const [locationPerimeter, setLocationPerimeter] = useState(null);
 
-const ManagerDashboard = () => {
-  const [locationData, setLocationData] = useState({
-    perimeter: 500, // Example perimeter in meters
-    latitude: 37.7749, // Example latitude
-    longitude: -122.4194, // Example longitude
-  });
+  useEffect(() => {
+    // Fetch the user's current location
+    navigator.geolocation.getCurrentPosition((position) => {
+      setLatitude(position.coords.latitude);
+      setLongitude(position.coords.longitude);
+    });
 
-  // Dummy user shifts data
-  const [userShifts, setUserShifts] = useState([
-    { _id: "1", user: { name: "Alice Johnson" }, clockInTime: "08:00", clockOutTime: "16:00", note: "On time" },
-    { _id: "2", user: { name: "Bob Smith" }, clockInTime: "09:00", clockOutTime: "17:00", note: "Late" },
-    { _id: "3", user: { name: "Charlie Davis" }, clockInTime: "08:30", clockOutTime: "16:30", note: "On time" },
-  ]);
+    // Fetch location perimeter data
+    const fetchLocationPerimeter = async () => {
+      try {
+        const res = await axios.get("/api/location-perimeter");
+        setLocationPerimeter(res.data);
+      } catch (err) {
+        console.error("Error fetching perimeter", err);
+      }
+    };
+    fetchLocationPerimeter();
+  }, []);
 
-  // Dummy data for chart statistics
-  const [chartData, setChartData] = useState({
-    days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    avgHours: [8, 7.5, 8.2, 7.8, 8.1], // Avg hours spent clocked in each day
-    clockIns: [3, 3, 2, 3, 3], // Number of people clocking in each day
-    totalHours: [24, 22.5, 24.6, 23.4, 24.3], // Total hours clocked in per staff
-  });
-
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    const { perimeter, latitude, longitude } = locationData;
-
-    // Here, we would send the perimeter data to the server
-    alert(`Location perimeter set to ${perimeter} meters at latitude ${latitude}, longitude ${longitude}`);
+  // Function to calculate the distance between two locations (Haversine formula)
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c * 1000; // Distance in meters
   };
 
-  // Bar chart data and options for Average Hours, Clock-ins, and Total Hours
-  const data  = {
-    labels: chartData?.days || [], // Days of the week
-    datasets: [
-      {
-        label: "Avg Hours Spent Clocked In",
-        data: chartData?.avgHours || [],
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
-      },
-      {
-        label: "Number of People Clocking In",
-        data: chartData?.clockIns || [],
-        backgroundColor: "rgba(153, 102, 255, 0.2)",
-        borderColor: "rgba(153, 102, 255, 1)",
-        borderWidth: 1,
-      },
-      {
-        label: "Total Hours Clocked In per Staff",
-        data: chartData?.totalHours || [],
-        backgroundColor: "rgba(255, 159, 64, 0.2)",
-        borderColor: "rgba(255, 159, 64, 1)",
-        borderWidth: 1,
-      },
-    ],
+  // Clock in function
+  const clockIn = async () => {
+    if (!locationPerimeter) {
+      setMessage("Location perimeter not set.");
+      return;
+    }
+
+    const distance = getDistance(
+      latitude,
+      longitude,
+      locationPerimeter.latitude,
+      locationPerimeter.longitude
+    );
+
+    if (distance > locationPerimeter.perimeter) {
+      setMessage("You are outside the allowed perimeter.");
+    } else {
+      try {
+        const token = localStorage.getItem("authToken"); // Assuming token is stored in localStorage
+
+        const res = await axios.post(
+          "/api/clock-in",
+          {
+            latitude,
+            longitude,
+            note,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Attach the token in the Authorization header
+            },
+          }
+        );
+        setClockedIn(true);
+        setMessage("Clocked in successfully.");
+      } catch (err) {
+        setMessage("Error clocking in.");
+      }
+    }
   };
 
-  const options = {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: "Staff Clock-in Data",
-      },
-    },
-    scales: {
-      x: {
-        beginAtZero: true,
-      },
-    },
+  // Clock out function
+  const clockOut = async () => {
+    if (!clockedIn) {
+      setMessage("You need to clock in first.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("authToken"); // Assuming token is stored in localStorage
+
+      const res = await axios.post(
+        "/api/clock-out",
+        {
+          latitude,
+          longitude,
+          note,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Attach the token in the Authorization header
+          },
+        }
+      );
+      setClockedIn(false);
+      setMessage("Clocked out successfully.");
+    } catch (err) {
+      setMessage("Error clocking out.");
+    }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Manager Dashboard</h2>
+    <div className="max-w-md mx-auto p-4 bg-white rounded-lg shadow-lg">
+      <h2 className="text-xl font-semibold mb-4 text-center">Care Worker Clock In/Out</h2>
 
-      {/* Form to set location perimeter */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-xl font-semibold mb-4">Set Location Perimeter</h3>
-        <form onSubmit={handleFormSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Perimeter (in meters)</label>
-            <input
-              type="number"
-              name="perimeter"
-              value={locationData.perimeter}
-              onChange={(e) => setLocationData({ ...locationData, perimeter: e.target.value })}
-              className="mt-2 block w-full border border-gray-300 rounded p-2"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Latitude</label>
-            <input
-              type="number"
-              step="any"
-              name="latitude"
-              value={locationData.latitude}
-              onChange={(e) => setLocationData({ ...locationData, latitude: e.target.value })}
-              className="mt-2 block w-full border border-gray-300 rounded p-2"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Longitude</label>
-            <input
-              type="number"
-              step="any"
-              name="longitude"
-              value={locationData.longitude}
-              onChange={(e) => setLocationData({ ...locationData, longitude: e.target.value })}
-              className="mt-2 block w-full border border-gray-300 rounded p-2"
-              required
-            />
-          </div>
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-            Set Location Perimeter
-          </button>
-        </form>
+      {/* Latitude and Longitude */}
+      <div className="mb-4">
+        <p className="text-sm text-gray-500">Latitude: {latitude}</p>
+        <p className="text-sm text-gray-500">Longitude: {longitude}</p>
       </div>
 
-      {/* User Shift Log */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-xl font-semibold mb-4">User Shift Log for Today</h3>
-        <table className="min-w-full border-collapse border border-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 border-b">Name</th>
-              <th className="px-4 py-2 border-b">Clock-in Time</th>
-              <th className="px-4 py-2 border-b">Clock-out Time</th>
-              <th className="px-4 py-2 border-b">Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {userShifts.map((shift) => (
-              <tr key={shift._id}>
-                <td className="px-4 py-2 border-b">{shift.user.name}</td>
-                <td className="px-4 py-2 border-b">{shift.clockInTime}</td>
-                <td className="px-4 py-2 border-b">{shift.clockOutTime || "Not clocked out yet"}</td>
-                <td className="px-4 py-2 border-b">{shift.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Clock In/Out Form */}
+      <form className="space-y-4">
+        <div className="mb-4">
+          <label htmlFor="note" className="block text-sm font-medium text-gray-700">
+            Optional Note
+          </label>
+          <textarea
+            id="note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Add a note (optional)"
+          />
+        </div>
 
-      {/* Bar Chart for statistics */}
-      <div className="w-full p-4 md:max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-6">Manager Dashboard</h2>
-      <div className="w-full h-full">
-        <Line data={data} options={options} />
-      </div>
-    </div>
+        {/* Clock In / Out Buttons */}
+        <div className="space-x-4">
+          {!clockedIn ? (
+            <button
+              type="button"
+              onClick={clockIn}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              Clock In
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={clockOut}
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-red-400"
+            >
+              Clock Out
+            </button>
+          )}
+        </div>
+
+        {/* Time Display (Read-only) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">Clock Time</label>
+          <input
+            type="text"
+            value={new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            readOnly
+            className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-600"
+          />
+        </div>
+
+        {/* Error/Success Message */}
+        {message && (
+          <div className={`p-2 text-center text-white rounded-md ${message.includes('Error') ? 'bg-red-500' : 'bg-green-500'}`}>
+            {message}
+          </div>
+        )}
+      </form>
     </div>
   );
 };
 
-export default ManagerDashboard;
+export default ClockInOut;

@@ -87,54 +87,6 @@ router.get("/profile", authMiddleware, async (req, res) => {
   }
 });
 
-// 📝 **Update Location Perimeter**
-router.put("/update-perimeter", async (req, res) => {
-  try {
-    // First, check if the user is a manager in the authMiddleware
-    const { perimeter, latitude, longitude } = req.body;
-
-    // Validate the input data
-    if (typeof perimeter !== "number" || typeof latitude !== "number" || typeof longitude !== "number") {
-      return res.status(400).json({ msg: "Perimeter, latitude, and longitude are required" });
-    }
-
-    // Find the user and check if they're a manager
-    const user = await User.findById(req.user.id); // Assuming req.user.id is set after authentication
-    if (!user) {
-      return res.status(400).json({ msg: "User not found" });
-    }
-
-    // Ensure the user is a manager
-    if (user.role !== "manager") {
-      return res.status(403).json({ msg: "Unauthorized: Managers only" });
-    }
-
-    // If the user is a manager, proceed to update the location perimeter
-
-    // Update the location perimeter (assuming there's only one location perimeter document)
-    const locationPerimeter = await LocationPerimeter.findOne();
-    if (!locationPerimeter) {
-      return res.status(404).json({ msg: "Location perimeter not found" });
-    }
-
-    // Update the perimeter, latitude, and longitude
-    locationPerimeter.perimeter = perimeter;
-    locationPerimeter.latitude = latitude;
-    locationPerimeter.longitude = longitude;
-
-    // Save the updated perimeter
-    await locationPerimeter.save();
-
-    // Return the updated location perimeter
-    res.json(locationPerimeter);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
-
-
 // 📝 **Set Location Perimeter (Manager Only)**
 router.post("/location-perimeter", authMiddleware, async (req, res) => {
   try {

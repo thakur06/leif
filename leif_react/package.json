@@ -16,6 +16,7 @@
     "axios": "^1.8.3",
     "chart.js": "^4.4.8",
     "chartjs-plugin-datalabels": "^2.2.0",
+    "firebase": "^11.4.0",
     "install": "^0.13.0",
     "leif_react": "file:",
     "moment": "^2.30.1",

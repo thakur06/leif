@@ -88,5 +88,5 @@ app.post("/seed",async(req,res)=>{
   mongoose.connection.close();
   res.send("Data added to DB")
 })
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

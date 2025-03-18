@@ -63,7 +63,7 @@ const ClockInOut = () => {
         const token = localStorage.getItem("authToken"); // Assuming token is stored in localStorage
 
         const res = await axios.post(
-          "/api/clock-in",
+          "http://localhost:3000/api/shifts/clock-in",
           {
             latitude,
             longitude,

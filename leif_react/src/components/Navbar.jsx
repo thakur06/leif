@@ -3,20 +3,21 @@ import { Button } from "antd";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useState, useEffect } from "react";
 import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
-
+import { useAuth } from "../context/useAuth";
 const Navbar = () => {
+  const { userId, token, role} = useAuth();
   const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userType, setUserType] = useState(null);
+  const [userType, setUserType] = useState(role);
 
-  // Update userType when user logs in or logs out
+
   useEffect(() => {
     if (isAuthenticated && user) {
-      setUserType(user?.["https://yourdomain.com/role"] || "user"); // Default to "user"
+      setUserType(role); // Default to "user"
     } else {
       setUserType(null); // Reset on logout
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user,role]);
 
   return (
     <nav className="bg-green-700 p-4 shadow-md w-full fixed top-0 z-50">
@@ -60,14 +61,25 @@ const Navbar = () => {
               </Link>
             )}
 
-            {/* Show "Dashboard" only if the user is a manager */}
+            {/* Show "Analytics" only if the user is a manager */}
             {isAuthenticated && userType === "manager" && (
               <Link
-                to="/dashboard"
+                to="/analytics"
                 className="text-white hover:text-blue-200 transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Dashboard
+                Analytics
+              </Link>
+            )}
+
+            {/* Show "User Logs" only if the user is a manager */}
+            {isAuthenticated && userType === "manager" && (
+              <Link
+                to="/userlogs"
+                className="text-white hover:text-blue-200 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                User Logs
               </Link>
             )}
 

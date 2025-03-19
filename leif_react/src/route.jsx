@@ -7,7 +7,9 @@ import AppLayout from "./components/AppLayout";
 import ClockInOut from "./components/Clock";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useAuth } from "./context/useAuth";
-import { Profile } from "./components/Profile";
+import  Profile from "./components/Profile";
+import { Analytics } from "./components/Analytics";
+import {UserLogs}  from "./components/UserLogs";
 const ProtectedDashboard = ({ children }) => {
   const { userId, token, role, logout } = useAuth();
   const { isAuthenticated, user } = useAuth0();
@@ -28,6 +30,8 @@ const router = createBrowserRouter([
       { index: true, element: <Register /> },
       { path: "signin", element: <Login /> },
       {path: "profile", element: <Profile />},
+      { path: "userlogs", element: <UserLogs /> },
+      {path: "/analytics", element: <Analytics />},
       { path: "clock", element: <ProtectedRoute><ClockInOut /></ProtectedRoute> },
       { path: "dashboard", element: <ProtectedDashboard><Dashboard /></ProtectedDashboard> },
     ],

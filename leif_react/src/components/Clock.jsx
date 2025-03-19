@@ -36,13 +36,14 @@ const Clock = () => {
         { headers: { Authorization: `${token}` } }
       );
       setClockedIn(true);
+      setNote("");
       setMessage("Clocked in successfully.");
     } catch (err) {
       setMessage("Error clocking in: " + err);
     }
   };
 
-  const clockOut = async (id, clockOutTime, note) => {
+  const clockOut = async (id, note) => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -54,7 +55,7 @@ const Clock = () => {
       setClockedIn(false);
       setHistory((prevHistory) =>
         prevHistory.map((entry) =>
-          entry._id === id ? { ...entry, clockOutTime, note } : entry
+          entry._id === id ? { ...entry, note } : entry
         )
       );
       setMessage("Clocked out successfully.");
@@ -114,12 +115,13 @@ const Clock = () => {
       <h2 className="text-2xl font-bold mt-8 mb-4 text-blue-600">History</h2>
       <ul className="space-y-4">
         {history.map((entry) => (
-          <li key={entry._id} className="p-6 bg-gray-50 rounded-lg shadow-sm">
+          <li key={entry._id} className={`p-6 bg-gray-50 rounded-lg shadow-sm ${!entry.clockOutTime?"border border-red-500":null}`}>
             <div className="space-y-2">
               <p><strong>Date:</strong> {new Date(entry.date).toLocaleDateString()}</p>
               <p><strong>Clock In:</strong> {entry.clockInTime}</p>
               <p><strong>Clock Out:</strong> {entry.clockOutTime || "Not clocked out"}</p>
-              <p><strong>Note:</strong> {entry.note || "No note provided"}</p>
+              <p><strong>ClockInNote:</strong> {entry.clockInNote || "No note provided"}</p>
+              <p><strong>ClockOutNote :</strong> {entry.clockOutNote || "No note provided"}</p>
               <p><strong>Location:</strong> ({entry.clockInLocation.latitude}, {entry.clockInLocation.longitude})</p>
             </div>
             {!entry.clockOutTime && (
@@ -127,16 +129,13 @@ const Clock = () => {
                 className="mt-4 space-y-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const clockOutTime = e.target.clockOutTime.value;
+                  
                   const note = e.target.note.value;
-                  clockOut(entry._id, clockOutTime, note);
+                  clockOut(entry._id, note);
                 }}
               >
                 <div className="flex flex-col space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    <strong>Clock Out Time:</strong>
-                    <input type="time" name="clockOutTime" required className="ml-2 p-2 border rounded-md" />
-                  </label>
+
                   <label className="text-sm font-medium text-gray-700">
                     <strong>Note:</strong>
                     <input type="text" name="note" placeholder="Enter a note" className="ml-2 p-2 border rounded-md w-full" />

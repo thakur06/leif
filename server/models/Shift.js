@@ -7,7 +7,8 @@ const ShiftSchema = new mongoose.Schema({
   clockOutTime: { type: String, default: null }, // Store time in HH:mm format, default is null
   clockInLocation: { latitude: Number, longitude: Number },
   clockOutLocation: { latitude: Number, longitude: Number },
-  note: { type: String },
+  clockInNote: { type: String },
+  clockOutNote:{ type: String }
 });
 
 module.exports = mongoose.model("Shift", ShiftSchema);

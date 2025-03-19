@@ -25,7 +25,13 @@ router.post(
       let user = await User.findOne({ email });
 
       if (user) {
-        return res.json({ user_id: user._id, role: user.role }); // Return existing user ID & role
+        const payload = { user: { id: user.id, role: user.role } };
+        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" }, (err, token) => {
+          if (err) throw err;
+          console.log(token);
+          return res.json({ user_id: user._id, role: user.role, token }); // Return to prevent further execution
+        });
+        return; // Ensure no further execution after response is sent
       }
 
       // Create a new user with a default role (e.g., "user")
@@ -36,7 +42,7 @@ router.post(
       const payload = { user: { id: newUser.id, role: newUser.role } };
       jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" }, (err, token) => {
         if (err) throw err;
-        console.log(token)
+        console.log(token);
         res.json({ user_id: newUser._id, role: newUser.role, token });
       });
     } catch (err) {
@@ -44,6 +50,8 @@ router.post(
     }
   }
 );
+
+module.exports = router;
 
 
 
@@ -99,6 +107,14 @@ router.post("/location-perimeter", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/locations", async (req, res) => {
+  try {
+    const locations = await LocationPerimeter.find({}, "perimeter latitude longitude");
+    res.status(200).json(locations);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 
 

@@ -2,7 +2,7 @@ const express = require("express");
 const Shift = require("../models/Shift");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
-
+const moment = require("moment"); 
 const { getDistance } = require("geolib");
 const LocationPerimeter = require("../models/LocationPerimeter"); // Import the LocationPerimeter model
 
@@ -107,13 +107,24 @@ module.exports = router;
 // 📝 **Get Shift History**
 router.get("/history", authMiddleware, async (req, res) => {
   try {
-    const shifts = await Shift.find({ user: req.user.id }).sort({ clockInTime: -1 });
+    // Get the start and end of today
+    const startOfDay = moment().startOf('day').toDate(); // Start of today (00:00:00)
+    const endOfDay = moment().endOf('day').toDate(); // End of today (23:59:59)
+
+    // Fetch all shifts that were clocked in today
+    const shifts = await Shift.find({
+      date: {
+        $gte: startOfDay, // Greater than or equal to the start of today
+        $lte: endOfDay,   // Less than or equal to the end of today
+      },
+    }).sort({ date: 1, clockInTime: 1 }); // Sort by date and clockInTime
+
     res.json(shifts);
   } catch (err) {
+    console.error(err);
     res.status(500).send("Server error");
   }
 });
-
 
 // 📝 **Get Total Hours for Last Week (Monday to Friday) & Clocked-In Employee Count**
 router.get("/week", authMiddleware, async (req, res) => {
@@ -188,6 +199,31 @@ router.get("/week", authMiddleware, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+// Fetch shift history for a user
+router.get("/shifthistory/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find all shifts for the user, sorted by latest first
+    const shifts = await Shift.find({ user: userId })
+    .sort({
+      clockOutTime: 1, // Sort clockOutTime in ascending order, null values will be first
+      date: -1,        // Sort by date in descending order (most recent first)
+      clockInTime: -1  // Sort by clockInTime in descending order
+    });
+  
+    if (!shifts.length) {
+      return res.status(404).json({ message: "No history found for this user" });
+    }
+
+    res.json(shifts);
+  } catch (error) {
+    console.error("Error fetching history:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 
 

@@ -7,7 +7,7 @@ const AppLayout = () => {
   return (
     <div>
       {isAuthenticated && <Navbar />}
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto pt-20">
         <Outlet /> {/* This renders child routes */}
       </div>
     </div>

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from "chart.js";
-import moment from "moment";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -65,97 +64,136 @@ const ManagerDashboard = () => {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false, // Prevents the chart from collapsing on small devices
     plugins: {
       title: {
         display: true,
         text: "Staff Clock-in Data",
+        font: {
+          size: 16,
+          weight: "bold",
+        },
+      },
+      legend: {
+        position: "bottom",
+        labels: {
+          font: {
+            size: 14,
+          },
+        },
       },
     },
     scales: {
       x: {
-        beginAtZero: true,
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 14,
+          },
+        },
+      },
+      y: {
+        grid: {
+          color: "rgba(0, 0, 0, 0.05)",
+        },
+        ticks: {
+          font: {
+            size: 14,
+          },
+        },
       },
     },
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Manager Dashboard</h2>
+    <div className="p-6 bg-gray-50 min-h-screen flex justify-center">
+      <div className="w-full max-w-6xl"> {/* Limit width to max-w-6xl and center it */}
+        <h2 className="text-3xl font-bold text-gray-800 mb-8">Manager Dashboard</h2>
 
-      {/* Form to set location perimeter */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-xl font-semibold mb-4">Set Location Perimeter</h3>
-        <form onSubmit={handleFormSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Perimeter (in meters)</label>
-            <input
-              type="number"
-              name="perimeter"
-              value={locationData.perimeter}
-              onChange={(e) => setLocationData({ ...locationData, perimeter: e.target.value })}
-              className="mt-2 block w-full border border-gray-300 rounded p-2"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Latitude</label>
-            <input
-              type="number"
-              step="any"
-              name="latitude"
-              value={locationData.latitude}
-              onChange={(e) => setLocationData({ ...locationData, latitude: e.target.value })}
-              className="mt-2 block w-full border border-gray-300 rounded p-2"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Longitude</label>
-            <input
-              type="number"
-              step="any"
-              name="longitude"
-              value={locationData.longitude}
-              onChange={(e) => setLocationData({ ...locationData, longitude: e.target.value })}
-              className="mt-2 block w-full border border-gray-300 rounded p-2"
-              required
-            />
-          </div>
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-            Set Location Perimeter
-          </button>
-        </form>
-      </div>
+        {/* Form to set location perimeter */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+          <h3 className="text-2xl font-semibold text-gray-700 mb-6">Set Location Perimeter</h3>
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Perimeter (in meters)</label>
+              <input
+                type="number"
+                name="perimeter"
+                value={locationData.perimeter}
+                onChange={(e) => setLocationData({ ...locationData, perimeter: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+              <input
+                type="number"
+                step="any"
+                name="latitude"
+                value={locationData.latitude}
+                onChange={(e) => setLocationData({ ...locationData, latitude: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+              <input
+                type="number"
+                step="any"
+                name="longitude"
+                value={locationData.longitude}
+                onChange={(e) => setLocationData({ ...locationData, longitude: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+            >
+              Set Location Perimeter
+            </button>
+          </form>
+        </div>
 
-      {/* User Shift Log */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-xl font-semibold mb-4">User Shift Log for Today</h3>
-        <table className="min-w-full border-collapse border border-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-2 border-b">Name</th>
-              <th className="px-4 py-2 border-b">Clock-in Time</th>
-              <th className="px-4 py-2 border-b">Clock-out Time</th>
-              <th className="px-4 py-2 border-b">Note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {userShifts.map((shift) => (
-              <tr key={shift._id}>
-                <td className="px-4 py-2 border-b">{shift.user.name}</td>
-                <td className="px-4 py-2 border-b">{shift.clockInTime}</td>
-                <td className="px-4 py-2 border-b">{shift.clockOutTime || "Not clocked out yet"}</td>
-                <td className="px-4 py-2 border-b">{shift.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        {/* User Shift Log */}
+        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+          <h3 className="text-2xl font-semibold text-gray-700 mb-6">User Shift Log for Today</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse border border-gray-200">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Clock-in Time</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Clock-out Time</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userShifts.map((shift) => (
+                  <tr key={shift._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 border-b text-sm text-gray-700">{shift.user.name}</td>
+                    <td className="px-4 py-3 border-b text-sm text-gray-700">{shift.clockInTime}</td>
+                    <td className="px-4 py-3 border-b text-sm text-gray-700">{shift.clockOutTime || "Not clocked out yet"}</td>
+                    <td className="px-4 py-3 border-b text-sm text-gray-700">{shift.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      {/* Bar Chart for statistics */}
-      <div className="bg-white p-4 rounded shadow">
-        <h3 className="text-xl font-semibold mb-4">Clock-in Statistics</h3>
-        <Line data={barChartData} options={options} />
+        {/* Bar Chart for statistics */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-2xl font-semibold text-gray-700 mb-6">Clock-in Statistics</h3>
+          <div className="h-96"> {/* Fixed height for the chart */}
+            <Line data={barChartData} options={options} />
+          </div>
+        </div>
       </div>
     </div>
   );

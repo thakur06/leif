@@ -8,10 +8,12 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <AuthProvider>
-  <Auth0Provider
-  domain="dev-3wkl15qapej7gb1v.us.auth0.com"
-    clientId="szgbnDJfud12Kftj5QcaM1gJkz8BBjAU"
-    authorizationParams={{ redirect_uri: window.location.origin }}
+<Auth0Provider
+    domain="dev-c70oax132wfgzj0a.us.auth0.com"
+    clientId="Sz3LefJHa0DWOzKn2zx3QMUd89ReE81L"
+    authorizationParams={{
+      redirect_uri: window.location.origin
+    }}
   >
     <RouterProvider router={router} />
   </Auth0Provider></AuthProvider>

@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
 
   // Function to update user state and store in localStorage
   const login = (userId, token, role) => {
+    console.log("registration triggered")
     setUserId(userId);
     setToken(token);
     setRole(role);

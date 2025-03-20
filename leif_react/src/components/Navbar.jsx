@@ -1,23 +1,32 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "antd";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useState, useEffect } from "react";
 import { MenuOutlined, CloseOutlined, UserOutlined } from "@ant-design/icons";
 import { useAuth } from "../context/useAuth";
+
 const Navbar = () => {
-  const { userId, token, role} = useAuth();
-  const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
+  const { userId, token, role } = useAuth();
+  const { loginWithRedirect, logout: auth0Logout, isAuthenticated, user } = useAuth0();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userType, setUserType] = useState(role);
-
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      setUserType(role); // Default to "user"
+      setUserType(role); // Sync with context role
     } else {
       setUserType(null); // Reset on logout
     }
-  }, [isAuthenticated, user,role]);
+  }, [isAuthenticated, user, role]);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    const returnToUrl = `${window.location.origin}/signin`; // Full URL: e.g., http://localhost:5173/signin
+    auth0Logout({ logoutParams: { returnTo: returnToUrl } }); // Use Auth0 logout directly
+    setIsMenuOpen(false); // Close mobile menu
+    navigate('/signin', { replace: true }); // Fallback redirect
+  };
 
   return (
     <nav className="bg-green-700 p-4 shadow-md w-full fixed top-0 z-50">
@@ -42,8 +51,6 @@ const Navbar = () => {
           }`}
         >
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0 text-center">
-
-
             {/* Show "Clock In/Out" only if the user is a careworker */}
             {isAuthenticated && userType === "careworker" && (
               <Link
@@ -54,7 +61,8 @@ const Navbar = () => {
                 Clock In/Out
               </Link>
             )}
-            
+
+            {/* Show "Dashboard" only if the user is a manager */}
             {isAuthenticated && userType === "manager" && (
               <Link
                 to="/dashboard"
@@ -64,6 +72,7 @@ const Navbar = () => {
                 Dashboard
               </Link>
             )}
+
             {/* Show "Analytics" only if the user is a manager */}
             {isAuthenticated && userType === "manager" && (
               <Link
@@ -103,10 +112,7 @@ const Navbar = () => {
           <div className="mt-4 md:mt-0 text-center">
             {isAuthenticated ? (
               <Button
-                onClick={() => {
-                  logout({ returnTo: window.location.origin });
-                  setUserType(null); // Ensure UI updates instantly
-                }}
+                onClick={handleLogout}
                 type="primary"
                 danger
                 className="bg-red-500 hover:bg-red-600 border-none"

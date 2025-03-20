@@ -28,7 +28,7 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Register /> },
-      { path: "signin", element: <Login /> },
+      { path: "signin", element: <Register /> },
       {path: "profile", element: <ProtectedRoute><Profile /></ProtectedRoute>},
       {path: "analytics", element: <ProtectedRoute><Analytics /></ProtectedRoute>},
       { path: "userlogs", element: <ProtectedRoute><UserLogs /> </ProtectedRoute>},

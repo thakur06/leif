@@ -75,7 +75,7 @@ return response.data.display_name
     fetchUserShifts();
   }, []); // Empty dependency array to run the effect once when the component mounts
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className='text-center'>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (

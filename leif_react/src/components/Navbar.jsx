@@ -42,13 +42,7 @@ const Navbar = () => {
           }`}
         >
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0 text-center">
-            <Link
-              to="/"
-              className="text-white hover:text-blue-200 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Home
-            </Link>
+
 
             {/* Show "Clock In/Out" only if the user is a careworker */}
             {isAuthenticated && userType === "careworker" && (
@@ -60,7 +54,16 @@ const Navbar = () => {
                 Clock In/Out
               </Link>
             )}
-
+            
+            {isAuthenticated && userType === "manager" && (
+              <Link
+                to="/dashboard"
+                className="text-white hover:text-blue-200 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
             {/* Show "Analytics" only if the user is a manager */}
             {isAuthenticated && userType === "manager" && (
               <Link

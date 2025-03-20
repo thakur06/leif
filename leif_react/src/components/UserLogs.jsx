@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 export const UserLogs = () => {
   const [userShifts, setUserShifts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const { role} = useAuth();
+  const navigate=useNavigate();
+useEffect(() => {
+  role!="manager"?navigate("/clock"):null
+}, [role]);
 
   // Function to reverse geocode latitude and longitude
   const reverseGeocode = async (lat, lon) => {

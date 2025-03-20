@@ -1,12 +1,24 @@
-import React, { useState } from "react";
-
+import React, { useState,useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
+import { useAuth0 } from "@auth0/auth0-react";
 const ManagerDashboard = () => {
+  const { role} = useAuth();
+  const { isAuthenticated,} = useAuth0();
+
+
   const [locationData, setLocationData] = useState({
     perimeter: 500, // Example perimeter in meters
     latitude: 37.7749, // Example latitude
     longitude: -122.4194, // Example longitude
   });
+const navigate=useNavigate();
 
+  useEffect(() => {
+!isAuthenticated?navigate("/signin"):null;
+role!="manager"?navigate("/clock"):null
+  }, [])
+  
   const handleFormSubmit = (e) => {
     e.preventDefault();
     const { perimeter, latitude, longitude } = locationData;

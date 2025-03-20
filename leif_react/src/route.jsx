@@ -15,9 +15,9 @@ const ProtectedDashboard = ({ children }) => {
   const { isAuthenticated, user } = useAuth0();
   const userType = user?.["https://yourdomain.com/role"] || "user"; // Get role from metadata
 
-  if (!isAuthenticated || role !== "manager") {
-    return <div className="text-red-500 text-center mt-10">Access Denied</div>;
-  }
+  // if (!isAuthenticated || role !== "manager") {
+  //   return <div className="text-red-500 text-center mt-10">Access Denied</div>;
+  // }
 
   return children;
 };
@@ -29,9 +29,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Register /> },
       { path: "signin", element: <Login /> },
-      {path: "profile", element: <Profile />},
-      { path: "userlogs", element: <UserLogs /> },
-      {path: "/analytics", element: <Analytics />},
+      {path: "profile", element: <ProtectedRoute><Profile /></ProtectedRoute>},
+      {path: "analytics", element: <ProtectedRoute><Analytics /></ProtectedRoute>},
+      { path: "userlogs", element: <ProtectedRoute><UserLogs /> </ProtectedRoute>},
       { path: "clock", element: <ProtectedRoute><ClockInOut /></ProtectedRoute> },
       { path: "dashboard", element: <ProtectedDashboard><Dashboard /></ProtectedDashboard> },
     ],

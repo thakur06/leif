@@ -17,42 +17,63 @@ router.post(
   ],
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
     const { name, email } = req.body;
 
     try {
+      // Check if user exists
       let user = await User.findOne({ email });
 
       if (user) {
+        // User exists - generate token and return
         const payload = { user: { id: user.id, role: user.role } };
-        jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" }, (err, token) => {
-          if (err) throw err;
-          console.log(token);
-          return res.json({ user_id: user._id, role: user.role, token }); // Return to prevent further execution
+        jwt.sign(
+          payload,
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" },
+          (err, token) => {
+            if (err) throw err;
+            return res.json({ 
+              user_id: user._id, 
+              role: user.role, 
+              token 
+            });
+          }
+        );
+      } else {
+        // User doesn't exist - create new user
+        const newUser = new User({ 
+          name, 
+          email, 
+          role: "careworker" 
         });
-        return; // Ensure no further execution after response is sent
+        
+        await newUser.save();
+        
+        // Generate token for new user
+        const payload = { user: { id: newUser.id, role: newUser.role } };
+        jwt.sign(
+          payload,
+          process.env.JWT_SECRET,
+          { expiresIn: "1h" },
+          (err, token) => {
+            if (err) throw err;
+            res.json({ 
+              user_id: newUser._id, 
+              role: newUser.role, 
+              token 
+            });
+          }
+        );
       }
-
-      // Create a new user with a default role (e.g., "user")
-      const newUser = new User({ name, email, role: "user" });
-
-      await newUser.save();
-
-      const payload = { user: { id: newUser.id, role: newUser.role } };
-      jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" }, (err, token) => {
-        if (err) throw err;
-        console.log(token);
-        res.json({ user_id: newUser._id, role: newUser.role, token });
-      });
     } catch (err) {
-      res.status(500).send("Server error: " + err);
+      res.status(500).send("Server error: " + err.message);
     }
   }
 );
-
-module.exports = router;
-
 
 
 // 📝 **Get User Profile**

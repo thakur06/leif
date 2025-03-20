@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // Add this import
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -13,8 +15,14 @@ export const Analytics = () => {
     totalHours: []
   });
   const [loading, setLoading] = useState(true);
-
+      const { role} = useAuth();
+      const navigate=useNavigate();
   useEffect(() => {
+
+  
+      role!="manager"?navigate("/clock"):null
+
+    
     const fetchData = async () => {
       try {
         const response = await axios.get('http://localhost:3000/api/shifts/week', {

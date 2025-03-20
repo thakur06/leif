@@ -21,7 +21,7 @@ const Clock = () => {
         const { data } = await axios.get(`http://localhost:3000/api/shifts/shifthistory/${userId}`);
         setHistory(data);
       } catch (error) {
-        console.error("Error fetching history:", error);
+        console.error("Error fetching history:");
       }
     };
     fetchHistory();
@@ -114,7 +114,7 @@ const Clock = () => {
 
       <h2 className="text-2xl font-bold mt-8 mb-4 text-blue-600">History</h2>
       <ul className="space-y-4">
-        {history.map((entry) => (
+        {history.length>0 ? history.map((entry) => (
           <li key={entry._id} className={`p-6 bg-gray-50 rounded-lg shadow-sm ${!entry.clockOutTime?"border border-red-500":null}`}>
             <div className="space-y-2">
               <p><strong>Date:</strong> {new Date(entry.date).toLocaleDateString()}</p>
@@ -147,7 +147,7 @@ const Clock = () => {
               </form>
             )}
           </li>
-        ))}
+        )):<div>No shifts found</div>}
       </ul>
     </div>
   );

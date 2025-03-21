@@ -32,9 +32,9 @@ const Navbar = () => {
     <nav className="bg-green-700 p-4 shadow-md w-full fixed top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo or Brand Name */}
-        <Link to="/" className="text-white text-xl font-bold">
+        <p  className="text-white text-xl font-bold">
           CareWork
-        </Link>
+        </p>
 
         {/* Mobile Menu Button */}
         <button

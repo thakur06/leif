@@ -15,7 +15,7 @@ const Register = () => {
     console.log(user)
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/users/register",
+        "https://leif-q464.vercel.app/api/users/register",
         {
           email: user.email,
           name: user.name,

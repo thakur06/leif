@@ -30,7 +30,7 @@ export const Analytics = () => {
 
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/shifts/week', {
+        const response = await axios.get('https://leif-q464.vercel.app/api/shifts/week', {
           headers: {
             Authorization: `${localStorage.getItem('token')}`
           }

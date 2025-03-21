@@ -6,7 +6,8 @@ const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 const dotenv = require("dotenv");
-const LocationPerimeter=require("../models/LocationPerimeter")
+const LocationPerimeter=require("../models/LocationPerimeter");
+const axios=require("axios");
 dotenv.config();
 
 router.post(
@@ -89,34 +90,49 @@ router.get("/profile", authMiddleware, async (req, res) => {
 // 📝 **Set Location Perimeter (Manager Only)**
 router.post("/location-perimeter", authMiddleware, async (req, res) => {
   try {
+    console.log("test location route")
     // Check if the user is a manager
-    const user = await User.findById(req.user.id); // Assume req.user.id is set by the authMiddleware
-
+    const user = await User.findById(req.user.id);
     if (!user || user.role !== "manager") {
       return res.status(403).json({ msg: "You must be a manager to set the location perimeter" });
     }
 
-    const { perimeter, latitude, longitude } = req.body;
+    const { perimeter, location } = req.body;
 
-    if (!perimeter || !latitude || !longitude) {
-      return res.status(400).json({ msg: "Perimeter, latitude, and longitude are required" });
+    if (!perimeter || !location) {
+      return res.status(400).json({ msg: "Perimeter and location are required" });
     }
+
+    // Convert location string to coordinates using Nominatim
+    const geoResponse = await axios.get(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`
+    );
+
+    if (!geoResponse.data.length) {
+      return res.status(400).json({ msg: "Invalid location - could not find coordinates" });
+    }
+
+    const { lat, lon } = geoResponse.data[0];
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lon);
 
     // Check if a perimeter is already set
     let locationPerimeter = await LocationPerimeter.findOne();
 
     if (locationPerimeter) {
-      // If the perimeter already exists, update it
+      // Update existing perimeter
       locationPerimeter.perimeter = perimeter;
       locationPerimeter.latitude = latitude;
       locationPerimeter.longitude = longitude;
-      locationPerimeter.createdAt = new Date(); // Optionally reset the created date on update
+     
+      locationPerimeter.createdAt = new Date();
     } else {
-      // If no perimeter exists, create a new one
+      // Create new perimeter
       locationPerimeter = new LocationPerimeter({
         perimeter,
         latitude,
         longitude,
+        
       });
     }
 

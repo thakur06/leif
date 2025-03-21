@@ -35,7 +35,7 @@ return response.data.display_name
       try {
         const token = localStorage.getItem('token'); // Get the token from localStorage
 
-        const response = await axios.get('http://localhost:3000/api/shifts/history', {
+        const response = await axios.get('https://leif-q464.vercel.app/api/shifts/history', {
           headers: {
             Authorization: `${token}`, // Add the token in the Authorization header
           },

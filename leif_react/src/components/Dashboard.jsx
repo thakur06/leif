@@ -3,13 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 const Dashboard = () => {
   const { role } = useAuth();
   const { isAuthenticated } = useAuth0();
   const navigate = useNavigate();
 
   const [locationData, setLocationData] = useState({
-    perimeter: 500,
+    perimeter: 500, // Initial value as a number
     location: ""
   });
   const [error, setError] = useState("");
@@ -48,21 +51,30 @@ const Dashboard = () => {
           }
         }
       );
-    
+
       const result = response.data;
-      setLocationData("");
-      alert(`Location perimeter set to ${result.perimeter} meters at
-             (Lat: ${result.latitude}, Long: ${result.longitude})`);
-            
+      // Reset both fields to empty strings
+      setLocationData({ perimeter: "", location: "" });
+      toast.success(
+        `Location perimeter set to ${result.perimeter} meters at (Lat: ${result.latitude}, Long: ${result.longitude})`,
+        {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
     } catch (err) {
-      setError(err.message || "Failed to save location. Please try again.");
+      setError(err.response?.data?.msg || "Failed to save location. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="flex justify-center items-center h-full">
       <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
         <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
           Manager Dashboard
@@ -118,6 +130,7 @@ const Dashboard = () => {
           </button>
         </form>
       </div>
+      <ToastContainer />
     </div>
   );
 };

@@ -545,5 +545,9 @@ app.post("/seed",async(req,res)=>{
   mongoose.connection.close();
   res.send("Data added to DB")
 })
+app.get("/",(req,res)=>{
+console.log("testing dummy endpoint");
+res.send("show me on the ui");
+})
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

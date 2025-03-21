@@ -21,7 +21,7 @@ const Clock = () => {
         const { data } = await axios.get(`https://leif-q464.vercel.app/api/shifts/shifthistory/${userId}`);
         setHistory(data);
       } catch (error) {
-        console.error("Error fetching history:");
+        console.error("Error fetching history:", error);
       }
     };
     fetchHistory();
@@ -39,7 +39,10 @@ const Clock = () => {
       setNote("");
       setMessage("Clocked in successfully.");
     } catch (err) {
-      setMessage("Error clocking in: " + err);
+      // Extract the specific message from the backend response
+      const errorMessage = err.response?.data?.msg || "Error clocking in. Please try again.";
+      setMessage(errorMessage);
+      console.error("Clock in error:", err);
     }
   };
 
@@ -51,16 +54,18 @@ const Clock = () => {
         { latitude, longitude, note },
         { headers: { Authorization: `${token}` } }
       );
-
       setClockedIn(false);
       setHistory((prevHistory) =>
         prevHistory.map((entry) =>
-          entry._id === id ? { ...entry, note } : entry
+          entry._id === id ? { ...entry, clockOutNote: note, clockOutTime: new Date().toLocaleTimeString() } : entry
         )
       );
       setMessage("Clocked out successfully.");
     } catch (err) {
-      setMessage("Error clocking out: " + err);
+      // Extract the specific message from the backend response
+      const errorMessage = err.response?.data?.msg || "Error clocking out. Please try again.";
+      setMessage(errorMessage);
+      console.error("Clock out error:", err);
     }
   };
 
@@ -69,8 +74,8 @@ const Clock = () => {
       <h2 className="text-2xl font-bold mb-6 text-center text-blue-600">Care Worker Clock In/Out</h2>
 
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-700">Latitude: {latitude}</p>
-        <p className="text-sm text-gray-700">Longitude: {longitude}</p>
+        <p className="text-sm text-gray-700">Latitude: {latitude || "Fetching..."}</p>
+        <p className="text-sm text-gray-700">Longitude: {longitude || "Fetching..."}</p>
       </div>
 
       <form className="space-y-4">
@@ -107,21 +112,21 @@ const Clock = () => {
       </form>
 
       {message && (
-        <div className={`mt-4 p-3 text-center text-white rounded-md ${message.includes('Error') ? 'bg-red-500' : 'bg-green-500'}`}>
+        <div className={`mt-4 p-3 text-center text-white rounded-md ${message.includes('outside') || message.includes('already') ? 'bg-red-500' : 'bg-green-500'}`}>
           {message}
         </div>
       )}
 
       <h2 className="text-2xl font-bold mt-8 mb-4 text-blue-600">History</h2>
       <ul className="space-y-4">
-        {history.length>0 ? history.map((entry) => (
-          <li key={entry._id} className={`p-6 bg-gray-50 rounded-lg shadow-sm ${!entry.clockOutTime?"border border-red-500":null}`}>
+        {history.length > 0 ? history.map((entry) => (
+          <li key={entry._id} className={`p-6 bg-gray-50 rounded-lg shadow-sm ${!entry.clockOutTime ? "border border-red-500" : null}`}>
             <div className="space-y-2">
               <p><strong>Date:</strong> {new Date(entry.date).toLocaleDateString()}</p>
               <p><strong>Clock In:</strong> {entry.clockInTime}</p>
               <p><strong>Clock Out:</strong> {entry.clockOutTime || "Not clocked out"}</p>
               <p><strong>ClockInNote:</strong> {entry.clockInNote || "No note provided"}</p>
-              <p><strong>ClockOutNote :</strong> {entry.clockOutNote || "No note provided"}</p>
+              <p><strong>ClockOutNote:</strong> {entry.clockOutNote || "No note provided"}</p>
               <p><strong>Location:</strong> ({entry.clockInLocation.latitude}, {entry.clockInLocation.longitude})</p>
             </div>
             {!entry.clockOutTime && (
@@ -129,13 +134,11 @@ const Clock = () => {
                 className="mt-4 space-y-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  
                   const note = e.target.note.value;
                   clockOut(entry._id, note);
                 }}
               >
                 <div className="flex flex-col space-y-2">
-
                   <label className="text-sm font-medium text-gray-700">
                     <strong>Note:</strong>
                     <input type="text" name="note" placeholder="Enter a note" className="ml-2 p-2 border rounded-md w-full" />
@@ -147,7 +150,7 @@ const Clock = () => {
               </form>
             )}
           </li>
-        )):<div>No shifts found</div>}
+        )) : <div>No shifts found</div>}
       </ul>
     </div>
   );

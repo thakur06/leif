@@ -5,7 +5,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import Map from "../maps/Map";
 const Dashboard = () => {
   const { role } = useAuth();
   const { isAuthenticated } = useAuth0();
@@ -74,64 +74,65 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-full">
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-          Manager Dashboard
-        </h2>
+    // <div className="flex justify-center items-center h-full">
+    //   <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm">
+    //     <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+    //       Manager Dashboard
+    //     </h2>
 
-        {error && (
-          <div className="text-red-500 text-sm mb-4">{error}</div>
-        )}
+    //     {error && (
+    //       <div className="text-red-500 text-sm mb-4">{error}</div>
+    //     )}
 
-        <form onSubmit={handleFormSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Perimeter (in meters)
-            </label>
-            <input
-              type="number"
-              name="perimeter"
-              value={locationData.perimeter}
-              onChange={(e) =>
-                setLocationData({ ...locationData, perimeter: e.target.value })
-              }
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-              required
-              min="1"
-              disabled={loading}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Location
-            </label>
-            <input
-              type="text"
-              name="location"
-              value={locationData.location}
-              onChange={(e) =>
-                setLocationData({ ...locationData, location: e.target.value })
-              }
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-              required
-              placeholder="Enter city or address (e.g., San Francisco, CA)"
-              disabled={loading}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-2 rounded-lg text-white transition duration-200 ${
-              loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Saving..." : "Set Location Perimeter"}
-          </button>
-        </form>
-      </div>
-      <ToastContainer />
-    </div>
+    //     <form onSubmit={handleFormSubmit} className="space-y-4">
+    //       <div>
+    //         <label className="block text-sm font-medium text-gray-700">
+    //           Perimeter (in meters)
+    //         </label>
+    //         <input
+    //           type="number"
+    //           name="perimeter"
+    //           value={locationData.perimeter}
+    //           onChange={(e) =>
+    //             setLocationData({ ...locationData, perimeter: e.target.value })
+    //           }
+    //           className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+    //           required
+    //           min="1"
+    //           disabled={loading}
+    //         />
+    //       </div>
+    //       <div>
+    //         <label className="block text-sm font-medium text-gray-700">
+    //           Location
+    //         </label>
+    //         <input
+    //           type="text"
+    //           name="location"
+    //           value={locationData.location}
+    //           onChange={(e) =>
+    //             setLocationData({ ...locationData, location: e.target.value })
+    //           }
+    //           className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+    //           required
+    //           placeholder="Enter city or address (e.g., San Francisco, CA)"
+    //           disabled={loading}
+    //         />
+    //       </div>
+    //       <button
+    //         type="submit"
+    //         disabled={loading}
+    //         className={`w-full py-2 rounded-lg text-white transition duration-200 ${
+    //           loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+    //         }`}
+    //       >
+    //         {loading ? "Saving..." : "Set Location Perimeter"}
+    //       </button>
+    //     </form>
+    //   </div>
+    //   <ToastContainer />
+    // </div>
+    <Map/>
   );
 };
 

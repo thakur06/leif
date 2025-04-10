@@ -70,8 +70,24 @@ router.post("/clock-in", authMiddleware, async (req, res) => {
 // 📝 **Clock Out**
 router.post("/clock-out", authMiddleware, async (req, res) => {
   try {
-    const { latitude, longitude, note } = req.body;
+    const { latitude, longitude, note , user , user_id } = req.body;
 
+    if (user==="manager"){
+      let shift = await Shift.findOne({ user: user_id, clockOutTime: null });
+
+      if (!shift) return res.status(400).json({ msg: "No active shift found" });
+      const istTime = dayjs().tz("Asia/Kolkata").format("HH:mm");
+      const currentDate = new Date();
+      shift.clockOutTime = istTime; // Store time (HH:mm)
+      shift.clockOutLocation = { latitude, longitude };
+      shift.clockOutNote = note;
+  
+      // Optionally, you can set the clock-out date to match the clock-in date if needed
+      shift.date = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()); // Same date
+  
+      await shift.save();
+      res.json(shift);
+    }
     // Retrieve the location perimeter data
     const locationPerimeter = await LocationPerimeter.findOne();
 

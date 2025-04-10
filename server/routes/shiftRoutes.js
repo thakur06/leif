@@ -142,14 +142,14 @@ router.get("/history", authMiddleware, async (req, res) => {
 // 📝 **Get Total Hours for Last Week (Monday to Friday) & Clocked-In Employee Count**
 router.get("/week", authMiddleware, async (req, res) => {
   try {
-    // Get the current date (March 19, 2025 based on system date)
-    const today = new Date('2025-03-19');
+
+    const today = new Date();  // This will use current date (April 09, 2025)
     
-    // Calculate the previous Monday (start of the last week)
+    
     const lastMonday = new Date(today);
     lastMonday.setDate(today.getDate() - today.getDay() - 6);
     
-    // Calculate the previous Sunday (end of the last week)
+   
     const lastSunday = new Date(today);
     lastSunday.setDate(today.getDate() - today.getDay());
 
@@ -162,14 +162,13 @@ router.get("/week", authMiddleware, async (req, res) => {
       return res.status(404).json({ msg: "No shifts found for last week." });
     }
 
-    // Initialize tracking objects
     let totalHours = 0;
     const hoursPerDay = {};      // Total hours per day
     const usersPerDay = {};      // Unique users per day
     const hoursPerStaff = {};    // Total hours per staff member
 
     shifts.forEach((shift) => {
-      // Convert clockInTime and clockOutTime (HH:mm) to Date objects for calculation
+      
       if (shift.clockOutTime) {
         const [inHours, inMinutes] = shift.clockInTime.split(':').map(Number);
         const [outHours, outMinutes] = shift.clockOutTime.split(':').map(Number);
@@ -180,7 +179,7 @@ router.get("/week", authMiddleware, async (req, res) => {
         const clockOut = new Date(shift.date);
         clockOut.setHours(outHours, outMinutes, 0, 0);
 
-        // Handle cases where shift crosses midnight
+        
         if (clockOut < clockIn) {
           clockOut.setDate(clockOut.getDate() + 1);
         }
@@ -222,15 +221,10 @@ router.get("/week", authMiddleware, async (req, res) => {
 
     // Format response
     const response = {
-      // i. Average hours people are spending clocked in each day
       averageHoursPerDay: Object.fromEntries(
         Object.entries(avgHoursPerDay).map(([date, hours]) => [date, Number(hours.toFixed(2))])
       ),
-      
-      // ii. Number of people clocking in each day
       numberOfPeoplePerDay: numPeoplePerDay,
-      
-      // iii. Total hours clocked in per staff over the last week
       totalHoursPerStaff: Object.fromEntries(
         Object.entries(hoursPerStaff).map(([userId, data]) => [
           userId,
@@ -240,8 +234,6 @@ router.get("/week", authMiddleware, async (req, res) => {
           }
         ])
       ),
-      
-      // Additional useful info
       totalWeekHours: Number(totalHours.toFixed(2))
     };
 

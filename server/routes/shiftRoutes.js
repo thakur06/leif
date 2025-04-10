@@ -4,8 +4,15 @@ const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 const moment = require("moment"); 
 const { getDistance } = require("geolib");
-const LocationPerimeter = require("../models/LocationPerimeter"); // Import the LocationPerimeter model
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
 
+
+const LocationPerimeter = require("../models/LocationPerimeter"); // Import the LocationPerimeter model
+// Enable the plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 // 📝 **Clock In**
 router.post("/clock-in", authMiddleware, async (req, res) => {
   try {
@@ -40,13 +47,15 @@ router.post("/clock-in", authMiddleware, async (req, res) => {
     const currentDate = new Date();
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()); // Strip out the time
 
-    // If the user is within the perimeter and has no active shift, proceed with clocking in
+    const istTime = dayjs().tz("Asia/Kolkata").format("HH:mm");
+
+    // Now you can use it like this:
     const shift = new Shift({
       user: req.user.id,
-      date: date, // Store only the date (e.g., 2025-03-17)
-      clockInTime: currentDate.toTimeString().slice(0, 5), // Store time (HH:mm)
+      date: dayjs().tz("Asia/Kolkata").format("YYYY-MM-DD"),
+      clockInTime: istTime,
       clockInLocation: { latitude, longitude },
-      clockInNote:note,
+      clockInNote: note,
     });
 
     await shift.save();
@@ -84,9 +93,9 @@ router.post("/clock-out", authMiddleware, async (req, res) => {
     let shift = await Shift.findOne({ user: req.user.id, clockOutTime: null });
 
     if (!shift) return res.status(400).json({ msg: "No active shift found" });
-
+    const istTime = dayjs().tz("Asia/Kolkata").format("HH:mm");
     const currentDate = new Date();
-    shift.clockOutTime = currentDate.toTimeString().slice(0, 5); // Store time (HH:mm)
+    shift.clockOutTime = istTime; // Store time (HH:mm)
     shift.clockOutLocation = { latitude, longitude };
     shift.clockOutNote = note;
 

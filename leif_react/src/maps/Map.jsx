@@ -14,7 +14,6 @@ const DEFAULT_ZOOM = 4.5;
 const DEFAULT_ZOOM_WITH_LOCATION = 16;
 
 // Replace with your actual API key (e.g., from environment variables)
-// const API_KEY = "AIzaSyB0nNFC2pkIE5Yfmg4g8M_LSrCUIGyBZqM";
 
 export default function Map() {
   const [Place, setPlace] = useState(undefined); // Note: Consider renaming to 'place' (lowercase) for convention

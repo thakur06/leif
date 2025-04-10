@@ -151,54 +151,52 @@ router.get("/history", authMiddleware, async (req, res) => {
 // 📝 **Get Total Hours for Last Week (Monday to Friday) & Clocked-In Employee Count**
 router.get("/week", authMiddleware, async (req, res) => {
   try {
-    const today = new Date();
-
-    // Calculate last week's Monday and Sunday
-    const day = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const diffToMonday = day === 0 ? 6 : day - 1;
-
+    const today = new Date(); // April 09, 2025
+    
+    // Calculate previous week's Monday
     const lastMonday = new Date(today);
-    lastMonday.setDate(today.getDate() - diffToMonday - 7);
-    lastMonday.setHours(0, 0, 0, 0);
+    lastMonday.setDate(today.getDate() - today.getDay() - 6);
+    
+    // Calculate previous week's Sunday
+    const lastSunday = new Date(today);
+    lastSunday.setDate(today.getDate() - today.getDay());
 
-    const lastSunday = new Date(lastMonday);
-    lastSunday.setDate(lastMonday.getDate() + 6);
-    lastSunday.setHours(23, 59, 59, 999);
-
+    // Fetch all shifts from last week
     const shifts = await Shift.find({
       date: { $gte: lastMonday, $lte: lastSunday },
     }).populate('user');
 
     if (!shifts.length) {
-      return res.status(404).json({ msg: "No shifts found for last week." });
+      return res.status(404).json({ message: "No shifts found for last week" });
     }
 
     let totalHours = 0;
-    const hoursPerDay = {};
-    const usersPerDay = {};
-    const hoursPerStaff = {};
+    const hoursPerDay = {};      // Total hours per day
+    const usersPerDay = {};      // Unique users per day
+    const hoursPerStaff = {};    // Total hours per staff member
 
     shifts.forEach((shift) => {
-      if (shift.clockOutTime && shift.clockInTime) {
+      if (shift.clockOutTime) {
         const [inHours, inMinutes] = shift.clockInTime.split(':').map(Number);
         const [outHours, outMinutes] = shift.clockOutTime.split(':').map(Number);
-
+        
         const clockIn = new Date(shift.date);
         clockIn.setHours(inHours, inMinutes, 0, 0);
-
+        
         const clockOut = new Date(shift.date);
         clockOut.setHours(outHours, outMinutes, 0, 0);
 
+        // Handle overnight shifts
         if (clockOut < clockIn) {
-          clockOut.setDate(clockOut.getDate() + 1); // Handle overnight shifts
+          clockOut.setDate(clockOut.getDate() + 1);
         }
 
         const hoursWorked = (clockOut - clockIn) / (1000 * 60 * 60);
         totalHours += hoursWorked;
 
         const shiftDate = shift.date.toISOString().split('T')[0];
-
-        // Update hours per day
+        
+        // Total hours per day
         hoursPerDay[shiftDate] = (hoursPerDay[shiftDate] || 0) + hoursWorked;
 
         // Track unique users per day
@@ -207,50 +205,66 @@ router.get("/week", authMiddleware, async (req, res) => {
         }
         usersPerDay[shiftDate].add(shift.user._id.toString());
 
-        // Track hours per staff
+        // Track total hours per staff
         const userId = shift.user._id.toString();
-        if (!hoursPerStaff[userId]) {
-          hoursPerStaff[userId] = { hours: 0, name: shift.user.name };
-        }
-        hoursPerStaff[userId].hours += hoursWorked;
+        hoursPerStaff[userId] = {
+          hours: (hoursPerStaff[userId]?.hours || 0) + hoursWorked,
+          name: shift.user.name
+        };
       }
     });
 
+    // Calculate averages and unique users
     const avgHoursPerDay = {};
-    const numPeoplePerDay = {};
+    const uniqueUsersLastWeek = new Set();
 
     for (const date in hoursPerDay) {
       const numPeople = usersPerDay[date].size;
-      numPeoplePerDay[date] = numPeople;
       avgHoursPerDay[date] = hoursPerDay[date] / numPeople;
+      usersPerDay[date].forEach(userId => uniqueUsersLastWeek.add(userId));
     }
 
-    // ✅ Final Response Formatting
+    // Format response with the specific structure
     const response = {
-      averageHoursPerDay: Object.fromEntries(
-        Object.entries(avgHoursPerDay).map(([date, hours]) => [date, Number(hours.toFixed(2))])
-      ),
-      numberOfPeoplePerDay: numPeoplePerDay,
-      totalHoursPerStaff: Object.fromEntries(
-        Object.entries(hoursPerStaff).map(([userId, data]) => [
-          userId,
-          {
-            name: data.name,
-            totalHours: Number(data.hours.toFixed(2))
-          }
-        ])
-      ),
-      totalWeekHours: Number(totalHours.toFixed(2))
+      data: {
+        period: {
+          start: lastMonday.toISOString().split('T')[0], // e.g., "2025-03-31"
+          end: lastSunday.toISOString().split('T')[0]    // e.g., "2025-04-06"
+        },
+        averageHoursPerDay: Object.fromEntries(
+          Object.entries(avgHoursPerDay).map(([date, hours]) => [date, Number(hours.toFixed(2))])
+        ),
+        uniqueUsers: {
+          count: uniqueUsersLastWeek.size,
+          users: Array.from(uniqueUsersLastWeek).map(userId => ({
+            id: userId,
+            name: hoursPerStaff[userId]?.name || "Unknown"
+          }))
+        },
+        totalHoursPerEmployee: Object.fromEntries(
+          Object.entries(hoursPerStaff).map(([userId, data]) => [
+            userId,
+            {
+              name: data.name,
+              hours: Number(data.hours.toFixed(2))
+            }
+          ])
+        ),
+        totalWeekHours: Number(totalHours.toFixed(2))
+      },
+      status: "success",
+      message: "Weekly shift data retrieved successfully"
     };
 
     res.json(response);
-
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server error");
+    res.status(500).json({
+      status: "error",
+      message: "Server error occurred while retrieving weekly data"
+    });
   }
 });
-
 // Fetch shift history for a user
 router.get("/shifthistory/:userId", async (req, res) => {
   try {

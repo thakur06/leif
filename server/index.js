@@ -543,7 +543,7 @@ app.post("/seed",async(req,res)=>{
   [{
     _id: new mongoose.Types.ObjectId(),
     user: new mongoose.Types.ObjectId("67dbd0cb4c98ba9c9e5ea5ad"), // Priya Sharma
-    date: new Date("2025-04-05T00:00:00.000Z"), // Monday
+    date: new Date("2025-01-05T00:00:00.000Z"), // Monday
     clockInTime: "08:15",
     clockOutTime: "16:30",
     clockInLocation: { latitude: 28.4028807, longitude: 76.9549329 },
@@ -551,17 +551,18 @@ app.post("/seed",async(req,res)=>{
     clockInNote: "Starting morning shift in Ward A",
     clockOutNote: "Completed patient rounds",
   },
-  {
-    _id: new mongoose.Types.ObjectId(),
-    user: new mongoose.Types.ObjectId("67dbc74b0ae19d3a024e3c6d"), // bio guest
-    date: new Date("2025-04-02T00:00:00.000Z"),
-    clockInTime: "09:00",
-    clockOutTime: "17:15",
-    clockInLocation: { latitude: 28.4051203, longitude: 76.973656 },
-    clockOutLocation: { latitude: 28.4051203, longitude: 76.973656 },
-    clockInNote: "Assisting in OPD today",
-    clockOutNote: "Finished assisting Dr. Singh",
-  }]
+  // {
+  //   _id: new mongoose.Types.ObjectId(),
+  //   user: new mongoose.Types.ObjectId("67dbc74b0ae19d3a024e3c6d"), // bio guest
+  //   date: new Date("2025-04-02T00:00:00.000Z"),
+  //   clockInTime: "09:00",
+  //   clockOutTime: "17:15",
+  //   clockInLocation: { latitude: 28.4051203, longitude: 76.973656 },
+  //   clockOutLocation: { latitude: 28.4051203, longitude: 76.973656 },
+  //   clockInNote: "Assisting in OPD today",
+  //   clockOutNote: "Finished assisting Dr. Singh",
+  // }
+]
 
 );
   

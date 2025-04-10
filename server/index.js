@@ -543,7 +543,7 @@ app.post("/seed",async(req,res)=>{
   [{
     _id: new mongoose.Types.ObjectId(),
     user: new mongoose.Types.ObjectId("67dbd0cb4c98ba9c9e5ea5ad"), // Priya Sharma
-    date: new Date("2025-01-05T00:00:00.000Z"), // Monday
+    date: new Date("2025-04-05T00:00:00.000Z"), // Monday
     clockInTime: "08:15",
     clockOutTime: "16:30",
     clockInLocation: { latitude: 28.4028807, longitude: 76.9549329 },

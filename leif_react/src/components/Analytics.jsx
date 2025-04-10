@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Line, Bar } from "react-chartjs-2"; // Import Bar component
+import { Line, Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from "chart.js";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
@@ -11,13 +11,14 @@ export const Analytics = () => {
   const [chartData, setChartData] = useState({
     days: [],
     avgHours: [],
-    clockIns: [],
-    totalHours: []
   });
   const [staffChartData, setStaffChartData] = useState({
     labels: [],
     datasets: []
-  }); // New state for staff bar chart
+  });
+  const [totalWeekHours, setTotalWeekHours] = useState(0);
+  const [uniqueUserCount, setUniqueUserCount] = useState(0);
+  const [period, setPeriod] = useState({ start: '', end: '' });
   const [loading, setLoading] = useState(true);
   const { role } = useAuth();
   const navigate = useNavigate();
@@ -36,36 +37,24 @@ export const Analytics = () => {
           }
         });
         
-        const data = response.data;
-        console.log(data);
+        const { data } = response.data; // Access the 'data' property from the response
 
         // Transform API data for the daily Line Chart
         const days = Object.keys(data.averageHoursPerDay || {}).map(date => {
           const d = new Date(date);
           return d.toLocaleDateString('en-US', { weekday: 'short' });
         });
-        
         const avgHours = Object.values(data.averageHoursPerDay || {});
-        const clockIns = Object.values(data.numberOfPeoplePerDay || {});
-        
-        const totalStaffHours = Object.values(data.totalHoursPerStaff || {});
-        const totalHoursPerDay = totalStaffHours.length > 0 
-          ? days.map(() => {
-              const dailyAvg = totalStaffHours.reduce((sum, staff) => sum + staff.totalHours, 0) / days.length;
-              return Number(dailyAvg.toFixed(2));
-            })
-          : [];
 
         setChartData({
           days,
           avgHours,
-          clockIns,
-          totalHours: totalHoursPerDay
         });
 
         // Transform API data for the staff Bar Chart
-        const staffNames = Object.values(data.totalHoursPerStaff || {}).map(staff => staff.name);
-        const staffHours = Object.values(data.totalHoursPerStaff || {}).map(staff => staff.totalHours);
+        const staffData = data.totalHoursPerEmployee || {};
+        const staffNames = Object.values(staffData).map(staff => staff.name);
+        const staffHours = Object.values(staffData).map(staff => staff.hours);
 
         setStaffChartData({
           labels: staffNames,
@@ -80,6 +69,14 @@ export const Analytics = () => {
           ]
         });
 
+        // Set additional metrics
+        setTotalWeekHours(data.totalWeekHours || 0);
+        setUniqueUserCount(data.uniqueUsers?.count || 0);
+        setPeriod({
+          start: data.period?.start || '',
+          end: data.period?.end || ''
+        });
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching analytics data:', error);
@@ -90,31 +87,14 @@ export const Analytics = () => {
     fetchData();
   }, [role, navigate]);
 
-  // Line Chart configuration (unchanged)
   const lineChartDataConfig = {
     labels: chartData.days,
     datasets: [
       {
-        label: "Avg Hours Clocked In",
+        label: "Avg Hours Per Day",
         data: chartData.avgHours,
         borderColor: "rgba(75, 192, 192, 1)",
         backgroundColor: "rgba(75, 192, 192, 0.2)",
-        tension: 0.1,
-        fill: false
-      },
-      {
-        label: "Number of People Clocking In",
-        data: chartData.clockIns,
-        borderColor: "rgba(153, 102, 255, 1)",
-        backgroundColor: "rgba(153, 102, 255, 0.2)",
-        tension: 0.1,
-        fill: false
-      },
-      {
-        label: "Avg Total Hours per Staff",
-        data: chartData.totalHours,
-        borderColor: "rgba(255, 159, 64, 1)",
-        backgroundColor: "rgba(255, 159, 64, 0.2)",
         tension: 0.1,
         fill: false
       }
@@ -127,7 +107,7 @@ export const Analytics = () => {
     plugins: {
       title: {
         display: true,
-        text: "Staff Clock-in Analytics (Previous Week)",
+        text: `Daily Average Hours (${period.start} to ${period.end})`,
         font: { size: 16, weight: "bold" }
       },
       legend: {
@@ -138,11 +118,7 @@ export const Analytics = () => {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: (context) => {
-            const datasetLabel = context.dataset.label || '';
-            const value = context.parsed.y;
-            return `${datasetLabel}: ${value}${datasetLabel.includes('Hours') ? 'h' : ''}`;
-          }
+          label: (context) => `${context.dataset.label}: ${context.parsed.y}h`
         }
       }
     },
@@ -155,7 +131,7 @@ export const Analytics = () => {
       y: {
         grid: { color: "rgba(0, 0, 0, 0.05)" },
         ticks: { font: { size: 14 } },
-        title: { display: true, text: 'Values' }
+        title: { display: true, text: 'Hours' }
       }
     },
     hover: {
@@ -164,14 +140,13 @@ export const Analytics = () => {
     }
   };
 
-  // Bar Chart configuration for staff data
   const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       title: {
         display: true,
-        text: "Total Hours Worked per Staff (Previous Week)",
+        text: `Total Hours per Staff (${period.start} to ${period.end})`,
         font: { size: 16, weight: "bold" }
       },
       legend: {
@@ -180,10 +155,7 @@ export const Analytics = () => {
       },
       tooltip: {
         callbacks: {
-          label: (context) => {
-            const value = context.parsed.y;
-            return `${context.dataset.label}: ${value}h`;
-          }
+          label: (context) => `${context.dataset.label}: ${context.parsed.y}h`
         }
       }
     },
@@ -192,7 +164,7 @@ export const Analytics = () => {
         ticks: {
           font: { size: 12 },
           autoSkip: false,
-          maxRotation: 45, // Rotate labels for readability
+          maxRotation: 45,
           minRotation: 45
         },
         title: { display: true, text: 'Staff' }
@@ -210,36 +182,48 @@ export const Analytics = () => {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-2xl font-semibold text-gray-700 mb-6">Clock-in Statistics</h3>
       
-      {/* Daily Line Chart */}
-      <div className="h-96 mb-8">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <p>Loading analytics data...</p>
+      {loading ? (
+        <div className="flex justify-center items-center h-96">
+          <p>Loading analytics data...</p>
+        </div>
+      ) : (
+        <>
+          {/* Summary Stats */}
+          <div className="mb-6 grid grid-cols-2 gap-4">
+            <div className="p-4 bg-gray-100 rounded">
+              <p className="text-gray-600">Total Week Hours</p>
+              <p className="text-xl font-bold">{totalWeekHours}h</p>
+            </div>
+            <div className="p-4 bg-gray-100 rounded">
+              <p className="text-gray-600">Unique Staff Members</p>
+              <p className="text-xl font-bold">{uniqueUserCount}</p>
+            </div>
           </div>
-        ) : chartData.days.length === 0 ? (
-          <div className="flex justify-center items-center h-full">
-            <p>No data available for the previous week</p>
-          </div>
-        ) : (
-          <Line data={lineChartDataConfig} options={lineChartOptions} />
-        )}
-      </div>
 
-      {/* Staff Bar Chart */}
-      <h4 className="text-xl font-semibold text-gray-700 mb-4">Staff Hours Analytics</h4>
-      <div className="h-96">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <p>Loading staff data...</p>
+          {/* Daily Line Chart */}
+          <div className="h-96 mb-8">
+            {chartData.days.length === 0 ? (
+              <div className="flex justify-center items-center h-full">
+                <p>No data available for the previous week</p>
+              </div>
+            ) : (
+              <Line data={lineChartDataConfig} options={lineChartOptions} />
+            )}
           </div>
-        ) : staffChartData.labels.length === 0 ? (
-          <div className="flex justify-center items-center h-full">
-            <p>No staff data available</p>
+
+          {/* Staff Bar Chart */}
+          <h4 className="text-xl font-semibold text-gray-700 mb-4">Staff Hours Analytics</h4>
+          <div className="h-96">
+            {staffChartData.labels.length === 0 ? (
+              <div className="flex justify-center items-center h-full">
+                <p>No staff data available</p>
+              </div>
+            ) : (
+              <Bar data={staffChartData} options={barChartOptions} />
+            )}
           </div>
-        ) : (
-          <Bar data={staffChartData} options={barChartOptions} />
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };

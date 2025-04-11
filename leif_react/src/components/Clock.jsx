@@ -18,7 +18,7 @@ const Clock = () => {
 
     const fetchHistory = async () => {
       try {
-        const { data } = await axios.get(`https://leif-q464.vercel.app/api/shifts/shifthistory/${userId}`);
+        const { data } = await axios.get(`http://localhost:3000/api/shifts/shifthistory/${userId}`);
         setHistory(data);
       } catch (error) {
         console.error("Error fetching history:", error);
@@ -31,7 +31,7 @@ const Clock = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "https://leif-q464.vercel.app/api/shifts/clock-in",
+        "http://localhost:3000/api/shifts/clock-in",
         { latitude, longitude, note },
         { headers: { Authorization: `${token}` } }
       );
@@ -50,7 +50,7 @@ const Clock = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `https://leif-q464.vercel.app/api/shifts/clock-out`,
+        `http://localhost:3000/api/shifts/clock-out`,
         { latitude, longitude, note },
         { headers: { Authorization: `${token}` } }
       );

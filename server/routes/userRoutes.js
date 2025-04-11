@@ -17,6 +17,8 @@ router.post(
     check("email", "Please include a valid email").isEmail(),
   ],
   async (req, res) => {
+    console.log("Incoming /register request:", req.body);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -25,52 +27,53 @@ router.post(
     const { name, email } = req.body;
 
     try {
-      // Check if user exists
       let user = await User.findOne({ email });
 
-      if (user) {
-        // User exists - generate token and return
-        const payload = { user: { id: user.id, role: user.role } };
+      const generateTokenAndRespond = (user) => {
+        const payload = {
+          user: {
+            id: user.id,
+            role: user.role,
+          },
+        };
+
         jwt.sign(
           payload,
-          process.env.JWT_SECRET,
+          process.env.JWT_SECRET || "abhishek@0101", // Fallback to hardcoded secret
           { expiresIn: "1h" },
           (err, token) => {
-            if (err) throw err;
-            return res.json({ 
-              user_id: user._id, 
-              role: user.role, 
-              token 
+            if (err) {
+              console.error("JWT signing error:", err);
+              return res.status(500).json({ msg: "Token generation failed" });
+            }
+
+            console.log("Generated token:", token);
+            res.json({
+              user_id: user._id,
+              role: user.role,
+              token,
             });
           }
         );
+      };
+
+      if (user) {
+        console.log("User already exists, logging in...");
+        generateTokenAndRespond(user);
       } else {
-        // User doesn't exist - create new user
-        const newUser = new User({ 
-          name, 
-          email, 
-          role: "careworker" 
+        console.log("Creating new user...");
+        const newUser = new User({
+          name,
+          email,
+          role: "careworker",
         });
-        
+
         await newUser.save();
-        
-        // Generate token for new user
-        const payload = { user: { id: newUser.id, role: newUser.role } };
-        jwt.sign(
-          payload,
-          process.env.JWT_SECRET,
-          (err, token) => {
-            if (err) throw err;
-            res.json({ 
-              user_id: newUser._id, 
-              role: newUser.role, 
-              token 
-            });
-          }
-        );
+        generateTokenAndRespond(newUser);
       }
     } catch (err) {
-      res.status(500).send("Server error: " + err.message);
+      console.error("Server error:", err);
+      res.status(500).json({ msg: "Server error", error: err.message });
     }
   }
 );
@@ -78,6 +81,7 @@ router.post(
 
 // 📝 **Get User Profile**
 router.get("/profile", authMiddleware, async (req, res) => {
+
   try {
     const user = await User.findById(req.user.id).select("-password");
     res.json(user);
@@ -88,41 +92,31 @@ router.get("/profile", authMiddleware, async (req, res) => {
 
 // 📝 **Set Location Perimeter (Manager Only)**
 router.post("/location-perimeter", authMiddleware, async (req, res) => {
+  console.log("incoming req")
   try {
-    console.log("test location route")
     // Check if the user is a manager
+    console.log(req.body)
     const user = await User.findById(req.user.id);
     if (!user || user.role !== "manager") {
       return res.status(403).json({ msg: "You must be a manager to set the location perimeter" });
     }
 
-    const { perimeter, location } = req.body;
+    const { perimeter, lat,lng } = req.body;
 
-    if (!perimeter || !location) {
+    if (!perimeter || !lat || !lng) {
       return res.status(400).json({ msg: "Perimeter and location are required" });
     }
 
     // Convert location string to coordinates using Nominatim
-    const geoResponse = await axios.get(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`
-    );
-
-    if (!geoResponse.data.length) {
-      return res.status(400).json({ msg: "Invalid location - could not find coordinates" });
-    }
-
-    const { lat, lon } = geoResponse.data[0];
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lon);
-
+   
     // Check if a perimeter is already set
     let locationPerimeter = await LocationPerimeter.findOne();
 
     if (locationPerimeter) {
       // Update existing perimeter
       locationPerimeter.perimeter = perimeter;
-      locationPerimeter.latitude = latitude;
-      locationPerimeter.longitude = longitude;
+      locationPerimeter.latitude = lat;
+      locationPerimeter.longitude = lng;
      
       locationPerimeter.createdAt = new Date();
     } else {

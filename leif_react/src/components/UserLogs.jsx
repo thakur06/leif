@@ -18,9 +18,11 @@ useEffect(() => {
     try {
     console.log(lat,lon);
       const response = await axios.get(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-      );
-return response.data.display_name
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=AIzaSyB0nNFC2pkIE5Yfmg4g8M_LSrCUIGyBZqM`
+       
+      ); console.log(response)
+      const formattedAddress = response.data.results[3].formatted_address;
+      return formattedAddress;
       // Extract the formatted address from the response
 
     } catch (err) {
@@ -35,7 +37,7 @@ return response.data.display_name
       try {
         const token = localStorage.getItem('token'); // Get the token from localStorage
 
-        const response = await axios.get('https://leif-q464.vercel.app/api/shifts/history', {
+        const response = await axios.get('http://localhost:3000/api/shifts/history', {
           headers: {
             Authorization: `${token}`, // Add the token in the Authorization header
           },
